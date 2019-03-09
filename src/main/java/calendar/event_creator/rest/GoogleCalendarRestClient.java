@@ -1,7 +1,7 @@
 package calendar.event_creator.rest;
 
 import java.io.File;
-import java.io.InputStream;
+import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.Collections;
 
@@ -35,8 +35,8 @@ public class GoogleCalendarRestClient {
 	}
 
 	private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws Exception {
-		InputStream in = GoogleCalendarRestClient.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
-		GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
+		FileInputStream fis = new FileInputStream(CREDENTIALS_FILE_PATH);
+		GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(fis));
 
 		GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
 				HTTP_TRANSPORT,

@@ -20,7 +20,7 @@ import calendar.event_creator.utils.CalendarProperties;
 public class GoogleCalendarService {
 	private static final Log log = LogFactory.getLog(GoogleCalendarService.class);
 	private static final String CALENDAR_ID = CalendarProperties.getProperty("calendar.id");
-	private static final String COUNTRY_COMPETITION = CalendarProperties.getProperty("country.competition");
+	private static final String CHAMPIONSHIP = "REGULAR_SEASON";
 	private static final String TIMEZONE = "UTC";
 	private static final String EVENT_CREATE_TIMEZONE = "Europe/Budapest";
 	private static final String EVENT_LENGTH = "-02:00";
@@ -128,7 +128,7 @@ public class GoogleCalendarService {
 	}
 
 	private String getCompetitionDescription(Match match) {
-		return match.getCompetition().getName().equals(COUNTRY_COMPETITION)
+		return match.getStage().equals(CHAMPIONSHIP)
 				? ": " + match.getMatchday() + ". matchday"
 				: ": " + match.getStage().toLowerCase().replace("_", " ");
 	}

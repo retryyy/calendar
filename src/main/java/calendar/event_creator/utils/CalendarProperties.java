@@ -1,21 +1,24 @@
 package calendar.event_creator.utils;
 
-import java.io.FileReader;
+import java.io.IOException;
 import java.util.Properties;
 
 public class CalendarProperties {
 	private static Properties props;
 
 	public static String getProperty(String property) {
+		readProperties();
+		return props.getProperty(property);
+	}
+
+	private static void readProperties() {
 		if (props == null) {
-			try (FileReader reader = new FileReader("calendar.properties")) {
-				props = new Properties();
-				props.load(reader);
-			} catch (Exception e) {
+			props = new Properties();
+			try {
+				props.load(CalendarProperties.class.getResourceAsStream("/calendar.properties"));
+			} catch (IOException e) {
 				e.printStackTrace();
-				throw new RuntimeException();
 			}
 		}
-		return props.getProperty(property);
 	}
 }
