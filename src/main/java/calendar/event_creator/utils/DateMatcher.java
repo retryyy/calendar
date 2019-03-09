@@ -1,4 +1,4 @@
-package calendar.event_creator.service;
+package calendar.event_creator.utils;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

@@ -16,6 +16,7 @@ import calendar.event_creator.football_data.match.Match;
 import calendar.event_creator.rest.FootballDataRestClient;
 import calendar.event_creator.rest.GoogleCalendarRestClient;
 import calendar.event_creator.utils.CalendarProperties;
+import calendar.event_creator.utils.DateMatcher;
 
 public class GoogleCalendarService {
 	private static final Log log = LogFactory.getLog(GoogleCalendarService.class);
