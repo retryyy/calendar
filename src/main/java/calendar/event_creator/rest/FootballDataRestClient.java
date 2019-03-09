@@ -4,7 +4,11 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpHeaders;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
@@ -16,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import calendar.event_creator.utils.CalendarProperties;
 
 public class FootballDataRestClient {
+	private static final Log log = LogFactory.getLog(FootballDataRestClient.class);
 	private static final String AUTH_TOKEN_VALUE = CalendarProperties.getProperty("football.data.api.token");
 	private static String matches_update_limit = CalendarProperties.getProperty("matches.update.limit");
 	private static final String AUTH_TOKEN_KEY = "X-Auth-Token";
@@ -26,9 +31,9 @@ public class FootballDataRestClient {
 	private static final String TEAM_LABEL = "tla";
 	public static int num_of_calls = 0;
 
-	public static String getTeamMatchesAsString(String id, String dateFrom, String dateTo) throws Exception {
+	public static String getTeamMatchesAsString(String id, String dateFrom) throws Exception {
 		num_of_calls++;
-		HttpGet httpGet = buildHttpGetMatches(id, dateFrom, dateTo);
+		HttpGet httpGet = buildHttpGetMatches(id, dateFrom);
 		return getSiteData(httpGet);
 	}
 
@@ -42,14 +47,13 @@ public class FootballDataRestClient {
 				.asText();
 	}
 
-	private static HttpGet buildHttpGetMatches(String id, String dateFrom, String dateTo) throws URISyntaxException {
+	private static HttpGet buildHttpGetMatches(String id, String dateFrom) throws URISyntaxException {
 		matchesUpdateLimitModifier(matches_update_limit);
 		URI uri = new URIBuilder()
 				.setScheme("https")
 				.setHost(FOOTBALL_DATA_SITE)
 				.setPath(String.format(FOOTBALL_DATA_MATCHES, id))
 				.addParameter("dateFrom", dateFrom)
-				.setParameter("dateTo", dateTo)
 				.setParameter("status", UPCOMING_MATCHES_PARAMETER)
 				.setParameter("limit", matches_update_limit)
 				.build();
@@ -73,11 +77,15 @@ public class FootballDataRestClient {
 	}
 
 	private static String getSiteData(HttpGet httpGet) throws ClientProtocolException, IOException {
-		return EntityUtils.toString(HttpClientBuilder
+		HttpResponse response = HttpClientBuilder
 				.create()
 				.build()
-				.execute(httpGet)
-				.getEntity());
+				.execute(httpGet);
+		if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+			log.error("Error with football data response!");
+			throw new RuntimeException();
+		}
+		return EntityUtils.toString(response.getEntity());
 	}
 
 	private static void matchesUpdateLimitModifier(String limit) {

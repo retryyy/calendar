@@ -15,14 +15,12 @@ import calendar.event_creator.utils.CalendarProperties;
 public class AppService {
 	private static final Log log = LogFactory.getLog(AppService.class);
 	private static final String TEAM_ID = CalendarProperties.getProperty("team.id");
-	private static final String QUERY_DATE_FORMAT = "yyyy-MM-dd";
 	private GoogleCalendarService googleCalendarService;
 	private String currentTime;
-	private String oneMonthLaterTime;
 
 	public AppService() {
 		try {
-			setDates();
+			currentTime = new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime());
 			googleCalendarService = new GoogleCalendarService().setTeamId(TEAM_ID);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -31,18 +29,10 @@ public class AppService {
 	}
 
 	public void updateCalendar() throws Exception {
-		String response = FootballDataRestClient.getTeamMatchesAsString(TEAM_ID, currentTime, oneMonthLaterTime);
+		String response = FootballDataRestClient.getTeamMatchesAsString(TEAM_ID, currentTime);
 		Matches matches = new ObjectMapper().readValue(response, Matches.class);
 		matches.getMatches().forEach(match -> googleCalendarService.triggerEvent(match));
 		googleCalendarService.flushDb();
 		log.info("football-data.org has been called " + FootballDataRestClient.num_of_calls + " times.");
-	}
-
-	private void setDates() {
-		currentTime = new SimpleDateFormat(QUERY_DATE_FORMAT).format(Calendar.getInstance().getTime());
-
-		Calendar oneMonthLater = Calendar.getInstance();
-		oneMonthLater.add(Calendar.MONTH, 1);
-		oneMonthLaterTime = new SimpleDateFormat(QUERY_DATE_FORMAT).format(oneMonthLater.getTime());
 	}
 }

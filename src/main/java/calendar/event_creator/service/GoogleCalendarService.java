@@ -147,11 +147,15 @@ public class GoogleCalendarService {
 
 	private String createMatchId(Match match) {
 		String matchId = match.getSummary() + getDescription(match);
-		return matchId.replaceAll("[\\s-:.]", "");
+		return formatMatchId(matchId);
 	}
 
 	private String createMatchId(Event event) {
 		String matchId = event.getSummary() + event.getDescription();
+		return formatMatchId(matchId);
+	}
+
+	private String formatMatchId(String matchId) {
 		return matchId.replaceAll("[\\s-:.]", "");
 	}
 
