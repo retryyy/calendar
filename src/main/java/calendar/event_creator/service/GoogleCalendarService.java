@@ -1,6 +1,7 @@
 package calendar.event_creator.service;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -28,6 +29,8 @@ public class GoogleCalendarService {
 	private static final String CANCELLED_STATUS = "cancelled";
 	private String teamId;
 	private String teamName;
+	private List<Event> events;
+
 	private Calendar calendar;
 	private MatchDbConnection matchDbConnection;
 
@@ -38,14 +41,19 @@ public class GoogleCalendarService {
 
 	public void triggerEvent(Match match) {
 		try {
+			if (events == null) {
+				setEventList(match);
+			}
 			match.setSummary(getSummary(match));
 			String matchId = createMatchId(match);
 			MatchDb matchDb = matchDbConnection.findMatchDbyId(matchId);
 			log.info("Checking " + match.getSummary());
 
 			if (matchDb == null) {
-				Event event = createEvent(match);
+				Event event = searchEventByMatchId(matchId);
+				event = event == null ? createEvent(match) : event;
 				matchDbConnection.addMatchDb(matchId, event.getId(), match.getUtcDate());
+				log.info(match.getSummary() + " is updated in the DB.");
 			} else {
 				Event calendarEvent = getEvent(matchDb.getEventId());
 				String calendarEventTime = calendarEvent.getStart().getDateTime().toString();
@@ -76,8 +84,28 @@ public class GoogleCalendarService {
 		return this;
 	}
 
+	public void setEventList(Match match) throws IOException {
+		this.events = calendar.events().list(CALENDAR_ID)
+				.setTimeZone(TIMEZONE)
+				.setTimeMin(new DateTime(match.getUtcDate()))
+				.setSingleEvents(true)
+				.setOrderBy("startTime")
+				.execute()
+				.getItems();
+	}
+
 	public void flushDb() throws Exception {
 		matchDbConnection.fileDbWriter();
+	}
+
+	private Event searchEventByMatchId(String matchId) {
+		for (Event event : events) {
+			String googleEventId = createMatchId(event);
+			if (matchId.equals(googleEventId)) {
+				return event;
+			}
+		}
+		return null;
 	}
 
 	private Event createEvent(Match match) throws IOException {
@@ -118,7 +146,12 @@ public class GoogleCalendarService {
 	}
 
 	private String createMatchId(Match match) {
-		String matchId = match.getSummary() + getCompetitionDescription(match);
+		String matchId = match.getSummary() + getDescription(match);
+		return matchId.replaceAll("[\\s-:.]", "");
+	}
+
+	private String createMatchId(Event event) {
+		String matchId = event.getSummary() + event.getDescription();
 		return matchId.replaceAll("[\\s-:.]", "");
 	}
 

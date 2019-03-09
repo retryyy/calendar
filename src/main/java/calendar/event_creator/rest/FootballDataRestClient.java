@@ -17,6 +17,7 @@ import calendar.event_creator.utils.CalendarProperties;
 
 public class FootballDataRestClient {
 	private static final String AUTH_TOKEN_VALUE = CalendarProperties.getProperty("football.data.api.token");
+	private static String matches_update_limit = CalendarProperties.getProperty("matches.update.limit");
 	private static final String AUTH_TOKEN_KEY = "X-Auth-Token";
 	private static final String FOOTBALL_DATA_SITE = "api.football-data.org";
 	private static final String FOOTBALL_DATA_MATCHES = "/v2/teams/%s/matches";
@@ -42,6 +43,7 @@ public class FootballDataRestClient {
 	}
 
 	private static HttpGet buildHttpGetMatches(String id, String dateFrom, String dateTo) throws URISyntaxException {
+		matchesUpdateLimitModifier(matches_update_limit);
 		URI uri = new URIBuilder()
 				.setScheme("https")
 				.setHost(FOOTBALL_DATA_SITE)
@@ -49,7 +51,7 @@ public class FootballDataRestClient {
 				.addParameter("dateFrom", dateFrom)
 				.setParameter("dateTo", dateTo)
 				.setParameter("status", UPCOMING_MATCHES_PARAMETER)
-				.setParameter("limit", "6")
+				.setParameter("limit", matches_update_limit)
 				.build();
 		return buildHttpGet(uri);
 	}
@@ -76,5 +78,12 @@ public class FootballDataRestClient {
 				.build()
 				.execute(httpGet)
 				.getEntity());
+	}
+
+	private static void matchesUpdateLimitModifier(String limit) {
+		int updateLimit = Integer.valueOf(limit);
+		if (updateLimit < 1 || updateLimit > 8) {
+			matches_update_limit = String.valueOf(5);
+		}
 	}
 }

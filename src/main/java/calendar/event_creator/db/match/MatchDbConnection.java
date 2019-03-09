@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -30,7 +31,6 @@ public class MatchDbConnection {
 		mapper = new ObjectMapper();
 		writer = mapper.writer(new DefaultPrettyPrinter());
 		fileDbReader();
-		cleanDb();
 	}
 
 	public MatchDb findMatchDbyId(String matchId) {
@@ -58,6 +58,7 @@ public class MatchDbConnection {
 	}
 
 	public void fileDbWriter() throws JsonGenerationException, JsonMappingException, IOException {
+		cleanDb();
 		matches.sort(new MatchDbComparator());
 		writer.writeValue(new File(FILE_DB_PATH), matches);
 	}
@@ -75,7 +76,12 @@ public class MatchDbConnection {
 	private void cleanDb() {
 		matches.removeIf(match -> {
 			try {
-				return new SimpleDateFormat("yyyy-MM-dd").parse(match.getDate()).before(new Date());
+				Date matchDate = new SimpleDateFormat("yyyy-MM-dd").parse(match.getDate());
+				Calendar oneDayPlus = Calendar.getInstance();
+				oneDayPlus.setTime(matchDate);
+				oneDayPlus.add(Calendar.DATE, 1);
+
+				return oneDayPlus.getTime().before(new Date());
 			} catch (ParseException e) {
 				return false;
 			}

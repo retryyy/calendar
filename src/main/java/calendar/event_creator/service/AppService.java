@@ -18,7 +18,7 @@ public class AppService {
 	private static final String QUERY_DATE_FORMAT = "yyyy-MM-dd";
 	private GoogleCalendarService googleCalendarService;
 	private String currentTime;
-	private String monthLaterTime;
+	private String oneMonthLaterTime;
 
 	public AppService() {
 		try {
@@ -31,7 +31,7 @@ public class AppService {
 	}
 
 	public void updateCalendar() throws Exception {
-		String response = FootballDataRestClient.getTeamMatchesAsString(TEAM_ID, currentTime, monthLaterTime);
+		String response = FootballDataRestClient.getTeamMatchesAsString(TEAM_ID, currentTime, oneMonthLaterTime);
 		Matches matches = new ObjectMapper().readValue(response, Matches.class);
 		matches.getMatches().forEach(match -> googleCalendarService.triggerEvent(match));
 		googleCalendarService.flushDb();
@@ -43,6 +43,6 @@ public class AppService {
 
 		Calendar oneMonthLater = Calendar.getInstance();
 		oneMonthLater.add(Calendar.MONTH, 1);
-		monthLaterTime = new SimpleDateFormat(QUERY_DATE_FORMAT).format(oneMonthLater.getTime());
+		oneMonthLaterTime = new SimpleDateFormat(QUERY_DATE_FORMAT).format(oneMonthLater.getTime());
 	}
 }
