@@ -72,10 +72,11 @@ public class GoogleCalendarService {
 	}
 
 	private Event searchEventByMatchId(String matchId) {
-		for (Event event : events) {
+		for (int i = 0; i < events.size(); i++) {
+			Event event = events.get(i);
 			String googleEventId = createMatchId(event);
 			if (matchId.equals(googleEventId)) {
-				return event;
+				return events.remove(i);
 			}
 		}
 		return null;

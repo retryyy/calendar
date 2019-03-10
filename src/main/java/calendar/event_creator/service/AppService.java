@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import calendar.event_creator.football_data.match.Matches;
 import calendar.event_creator.rest.FootballDataRestClient;
 import calendar.event_creator.utils.CalendarProperties;
+import calendar.event_creator.utils.MatchesComparator;
 
 public class AppService {
 	private static final Log log = LogFactory.getLog(AppService.class);
@@ -31,6 +32,7 @@ public class AppService {
 	public void updateCalendar() throws Exception {
 		String response = FootballDataRestClient.getTeamMatchesAsString(TEAM_ID, currentTime);
 		Matches matches = new ObjectMapper().readValue(response, Matches.class);
+		matches.getMatches().sort(new MatchesComparator());
 		matches.getMatches().forEach(match -> googleCalendarService.triggerEvent(match));
 		log.info("football-data.org has been called " + FootballDataRestClient.num_of_calls + " times.");
 	}
