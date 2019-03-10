@@ -32,7 +32,6 @@ public class AppService {
 		String response = FootballDataRestClient.getTeamMatchesAsString(TEAM_ID, currentTime);
 		Matches matches = new ObjectMapper().readValue(response, Matches.class);
 		matches.getMatches().forEach(match -> googleCalendarService.triggerEvent(match));
-		googleCalendarService.flushDb();
 		log.info("football-data.org has been called " + FootballDataRestClient.num_of_calls + " times.");
 	}
 }

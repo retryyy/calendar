@@ -11,8 +11,6 @@ import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
 
-import calendar.event_creator.db.match.MatchDb;
-import calendar.event_creator.db.match.MatchDbConnection;
 import calendar.event_creator.football_data.match.Match;
 import calendar.event_creator.rest.FootballDataRestClient;
 import calendar.event_creator.rest.GoogleCalendarRestClient;
@@ -26,17 +24,13 @@ public class GoogleCalendarService {
 	private static final String TIMEZONE = "UTC";
 	private static final String EVENT_CREATE_TIMEZONE = "Europe/Budapest";
 	private static final String EVENT_LENGTH = "-02:00";
-	private static final String CANCELLED_STATUS = "cancelled";
 	private String teamId;
 	private String teamName;
 	private List<Event> events;
-
 	private Calendar calendar;
-	private MatchDbConnection matchDbConnection;
 
 	public GoogleCalendarService() throws Exception {
 		calendar = GoogleCalendarRestClient.buildCalendar();
-		matchDbConnection = new MatchDbConnection();
 	}
 
 	public void triggerEvent(Match match) {
@@ -46,32 +40,15 @@ public class GoogleCalendarService {
 			}
 			match.setSummary(getSummary(match));
 			String matchId = createMatchId(match);
-			MatchDb matchDb = matchDbConnection.findMatchDbyId(matchId);
+			Event event = searchEventByMatchId(matchId);
 			log.info("Checking " + match.getSummary());
 
-			if (matchDb == null) {
-				Event event = searchEventByMatchId(matchId);
-				event = event == null ? createEvent(match) : event;
-				matchDbConnection.addMatchDb(matchId, event.getId(), match.getUtcDate());
-				log.info(match.getSummary() + " is updated in the DB.");
+			if (event == null) {
+				createEvent(match);
 			} else {
-				Event calendarEvent = getEvent(matchDb.getEventId());
-				String calendarEventTime = calendarEvent.getStart().getDateTime().toString();
-				String matchDate = match.getUtcDate();
-
-				if (DateMatcher.equals(matchDb.getDate(), matchDate)) {
-					if (calendarEvent.getStatus().equals(CANCELLED_STATUS)) {
-						Event event = createEvent(match);
-						matchDbConnection.updateMatchDb(matchDb, event.getId(), matchDate);
-					} else if (!DateMatcher.equals(calendarEventTime, matchDate)) {
-						Event event = updateEvent(match, matchDb.getEventId());
-						matchDbConnection.updateMatchDb(matchDb, event.getId(), matchDate);
-					}
-				} else {
-					Event event = calendarEvent.getStatus().equals(CANCELLED_STATUS)
-							? createEvent(match)
-							: updateEvent(match, matchDb.getEventId());
-					matchDbConnection.updateMatchDb(matchDb, event.getId(), matchDate);
+				String eventTime = event.getStart().getDateTime().toString();
+				if (!DateMatcher.equals(eventTime, match.getUtcDate())) {
+					updateEvent(match, event.getId());
 				}
 			}
 		} catch (Exception e) {
@@ -92,10 +69,6 @@ public class GoogleCalendarService {
 				.setOrderBy("startTime")
 				.execute()
 				.getItems();
-	}
-
-	public void flushDb() throws Exception {
-		matchDbConnection.fileDbWriter();
 	}
 
 	private Event searchEventByMatchId(String matchId) {
@@ -128,10 +101,6 @@ public class GoogleCalendarService {
 
 	private void deleteEvent(String eventId) throws IOException {
 		calendar.events().delete(CALENDAR_ID, eventId).execute();
-	}
-
-	private Event getEvent(String eventId) throws IOException {
-		return calendar.events().get(CALENDAR_ID, eventId).setTimeZone(TIMEZONE).execute();
 	}
 
 	private void addDateTimesToEvent(Event event, String date) {

@@ -2,5 +2,4 @@ team.id=
 football.data.api.token=
 matches.update.limit=
 calendar.id=
-file.db.path=
 credentials.path=
