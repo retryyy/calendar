@@ -45,10 +45,12 @@ public class GoogleCalendarService {
 
 			if (event == null) {
 				createEvent(match);
+				log.info(match.getSummary() + " is created.");
 			} else {
 				String eventTime = event.getStart().getDateTime().toString();
 				if (!DateMatcher.equals(eventTime, match.getUtcDate())) {
 					updateEvent(match, event.getId());
+					log.info(match.getSummary() + " is updated.");
 				}
 			}
 		} catch (Exception e) {
@@ -89,14 +91,12 @@ public class GoogleCalendarService {
 		addDateTimesToEvent(event, match.getUtcDate());
 		event.setColorId("9");
 		Event updated = calendar.events().insert(CALENDAR_ID, event).execute();
-		log.info(match.getSummary() + " is created.");
 		return updated;
 	}
 
 	private Event updateEvent(Match match, String eventId) throws IOException {
 		deleteEvent(eventId);
 		Event event = createEvent(match);
-		log.info(match.getSummary() + " is updated.");
 		return event;
 	}
 
@@ -116,17 +116,11 @@ public class GoogleCalendarService {
 	}
 
 	private String createMatchId(Match match) {
-		String matchId = match.getSummary() + getDescription(match);
-		return formatMatchId(matchId);
+		return match.getSummary() + getDescription(match);
 	}
 
 	private String createMatchId(Event event) {
-		String matchId = event.getSummary() + event.getDescription();
-		return formatMatchId(matchId);
-	}
-
-	private String formatMatchId(String matchId) {
-		return matchId.replaceAll("[\\s-:.]", "");
+		return event.getSummary() + event.getDescription();
 	}
 
 	private String getDescription(Match match) {
