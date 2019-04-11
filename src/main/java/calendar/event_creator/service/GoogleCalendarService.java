@@ -11,7 +11,7 @@ import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
 
-import calendar.event_creator.football_data.match.Match;
+import calendar.event_creator.match.Match;
 import calendar.event_creator.rest.FootballDataRestClient;
 import calendar.event_creator.rest.GoogleCalendarRestClient;
 import calendar.event_creator.utils.CalendarProperties;

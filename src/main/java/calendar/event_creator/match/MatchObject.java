@@ -1,4 +1,4 @@
-package calendar.event_creator.football_data.match;
+package calendar.event_creator.match;
 
 public class MatchObject {
 	private String id;

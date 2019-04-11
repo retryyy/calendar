@@ -1,4 +1,4 @@
-package calendar.event_creator.football_data.match;
+package calendar.event_creator.match;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

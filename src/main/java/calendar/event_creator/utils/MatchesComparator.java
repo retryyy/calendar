@@ -5,7 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Comparator;
 import java.util.Date;
 
-import calendar.event_creator.football_data.match.Match;
+import calendar.event_creator.match.Match;
 
 public class MatchesComparator implements Comparator<Match> {
 

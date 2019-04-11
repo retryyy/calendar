@@ -8,7 +8,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import calendar.event_creator.football_data.match.Matches;
+import calendar.event_creator.match.Matches;
 import calendar.event_creator.rest.FootballDataRestClient;
 import calendar.event_creator.utils.CalendarProperties;
 import calendar.event_creator.utils.MatchesComparator;

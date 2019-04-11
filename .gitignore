@@ -3,4 +3,6 @@
 .classpath
 /target/
 calendar.properties
-tokens/
+/tokens/
+credentials.json
+/logs/
