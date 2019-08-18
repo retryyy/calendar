@@ -1,5 +1,5 @@
 team.id=
 football.data.api.token=
-matches.update.limit=
+matches.update.limit=6
 calendar.id=
-credentials.path=
+credentials.path=credentials.json

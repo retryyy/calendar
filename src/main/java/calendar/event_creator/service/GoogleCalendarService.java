@@ -35,9 +35,6 @@ public class GoogleCalendarService {
 
 	public void triggerEvent(Match match) {
 		try {
-			if (events == null) {
-				setEventList(match);
-			}
 			match.setSummary(getSummary(match));
 			String matchId = createMatchId(match);
 			Event event = searchEventByMatchId(matchId);
@@ -51,6 +48,8 @@ public class GoogleCalendarService {
 				if (!DateMatcher.equals(eventTime, match.getUtcDate())) {
 					updateEvent(match, event.getId());
 					log.info(match.getSummary() + " is updated.");
+				} else {
+					log.info(match.getSummary() + " is remained untouched.");
 				}
 			}
 		} catch (Exception e) {
@@ -63,14 +62,15 @@ public class GoogleCalendarService {
 		return this;
 	}
 
-	public void setEventList(Match match) throws IOException {
+	public GoogleCalendarService setEventList(String date) throws IOException {
 		this.events = calendar.events().list(CALENDAR_ID)
 				.setTimeZone(TIMEZONE)
-				.setTimeMin(new DateTime(match.getUtcDate()))
+				.setTimeMin(new DateTime(date))
 				.setSingleEvents(true)
 				.setOrderBy("startTime")
 				.execute()
 				.getItems();
+		return this;
 	}
 
 	private Event searchEventByMatchId(String matchId) {
@@ -87,17 +87,17 @@ public class GoogleCalendarService {
 	private Event createEvent(Match match) throws IOException {
 		Event event = new Event()
 				.setSummary(match.getSummary())
-				.setDescription(getDescription(match));
+				.setDescription(getDescription(match))
+				.setColorId("9");
 		addDateTimesToEvent(event, match.getUtcDate());
-		event.setColorId("9");
-		Event updated = calendar.events().insert(CALENDAR_ID, event).execute();
-		return updated;
+		return calendar.events()
+				.insert(CALENDAR_ID, event)
+				.execute();
 	}
 
 	private Event updateEvent(Match match, String eventId) throws IOException {
 		deleteEvent(eventId);
-		Event event = createEvent(match);
-		return event;
+		return createEvent(match);
 	}
 
 	private void deleteEvent(String eventId) throws IOException {
@@ -136,8 +136,8 @@ public class GoogleCalendarService {
 	}
 
 	private String getSummary(Match match) throws Exception {
-		String homeTeamLabel = null;
-		String awayTeamLabel = null;
+		String homeTeamLabel = "";
+		String awayTeamLabel = "";
 		String homeTeamId = match.getHomeTeam().getId();
 		String awayTeamId = match.getAwayTeam().getId();
 
