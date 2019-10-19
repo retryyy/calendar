@@ -21,18 +21,19 @@ public class AppService {
 		matches.getMatches().sort(new MatchesComparator());
 
 		googleCalendarService = new GoogleCalendarService()
-				.setTeamId(TEAM_ID)
+				.setTeam(TEAM_ID)
 				.setEventList(getNearestMatchUtcDate(matches));
 
 		matches.getMatches().forEach(match -> googleCalendarService.triggerEvent(match));
-		log.info("football-data.org has been called " + FootballDataRestClient.num_of_calls + " times.");
+		googleCalendarService.deletePostponedMatchEvent();
+		log.info("football-data.org has been called " + FootballDataRestClient.num_of_calls + " times");
 	}
 
 	private String getNearestMatchUtcDate(Matches matches) {
 		if (matches.getMatches().size() > 0) {
 			return matches.getMatches().get(0).getUtcDate();
 		} else {
-			log.info("There were no registered matches!");
+			log.warn("There are no registered matches!");
 			throw new RuntimeException();
 		}
 	}

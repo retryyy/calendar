@@ -25,8 +25,7 @@ public class CalendarProperties {
 			try {
 				props.load(in);
 			} catch (IOException e1) {
-				e1.printStackTrace();
-				throw new RuntimeException();
+				throw new RuntimeException(e1);
 			}
 		}
 	}

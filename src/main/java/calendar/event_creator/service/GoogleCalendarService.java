@@ -1,6 +1,8 @@
 package calendar.event_creator.service;
 
 import java.io.IOException;
+import java.text.MessageFormat;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -35,21 +37,20 @@ public class GoogleCalendarService {
 
 	public void triggerEvent(Match match) {
 		try {
-			match.setSummary(getSummary(match));
+			match.setSummary(createMatchSummary(match));
 			String matchId = createMatchId(match);
 			Event event = searchEventByMatchId(matchId);
-			log.info("Checking " + match.getSummary());
 
 			if (event == null) {
 				createEvent(match);
-				log.info(match.getSummary() + " is created.");
+				log.info("CREATED: " + match.getSummary());
 			} else {
 				String eventTime = event.getStart().getDateTime().toString();
 				if (!DateMatcher.equals(eventTime, match.getUtcDate())) {
 					updateEvent(match, event.getId());
-					log.info(match.getSummary() + " is updated.");
+					log.info("UPDATED: " + match.getSummary());
 				} else {
-					log.info(match.getSummary() + " is remained untouched.");
+					log.info("UNTOUCHED: " + match.getSummary());
 				}
 			}
 		} catch (Exception e) {
@@ -57,8 +58,9 @@ public class GoogleCalendarService {
 		}
 	}
 
-	public GoogleCalendarService setTeamId(String teamId) {
+	public GoogleCalendarService setTeam(String teamId) throws Exception {
 		this.teamId = teamId;
+		this.teamName = FootballDataRestClient.getTeamLabel(teamId);
 		return this;
 	}
 
@@ -70,7 +72,32 @@ public class GoogleCalendarService {
 				.setOrderBy("startTime")
 				.execute()
 				.getItems();
+		cleanOutNonMatchEvents();
 		return this;
+	}
+
+	private void cleanOutNonMatchEvents() {
+		String matchSummaryRegex = MessageFormat.format("{0}-{1}|{1}-{0}", teamName, "[A-Z]{3}");
+		Iterator<Event> eventIterator = events.iterator();
+		while (eventIterator.hasNext()) {
+			Event event = eventIterator.next();
+			if (!event.getSummary().matches(matchSummaryRegex)) {
+				eventIterator.remove();
+			}
+		}
+	}
+
+	public void deletePostponedMatchEvent() {
+		for (Event event : events) {
+			try {
+				if (event.getDescription() != null && !event.getDescription().equals("")) {
+					deleteEvent(event.getId());
+					log.info("DELETED: " + event.getSummary());
+				}
+			} catch (IOException e) {
+				log.warn("Could not delete event: " + event.getSummary());
+			}
+		}
 	}
 
 	private Event searchEventByMatchId(String matchId) {
@@ -126,7 +153,7 @@ public class GoogleCalendarService {
 	private String getDescription(Match match) {
 		return match.getCompetition().getName() + getCompetitionDescription(match) +
 				System.lineSeparator() +
-				String.format("%s - %s", match.getHomeTeam().getName(), match.getAwayTeam().getName());
+				MessageFormat.format("{0} - {1}", match.getHomeTeam().getName(), match.getAwayTeam().getName());
 	}
 
 	private String getCompetitionDescription(Match match) {
@@ -135,27 +162,14 @@ public class GoogleCalendarService {
 				: ": " + match.getStage().toLowerCase().replace("_", " ");
 	}
 
-	private String getSummary(Match match) throws Exception {
-		String homeTeamLabel = "";
-		String awayTeamLabel = "";
+	private String createMatchSummary(Match match) throws Exception {
 		String homeTeamId = match.getHomeTeam().getId();
 		String awayTeamId = match.getAwayTeam().getId();
 
 		if (homeTeamId.equals(teamId)) {
-			setTeamName(homeTeamId);
-			homeTeamLabel = teamName;
-			awayTeamLabel = FootballDataRestClient.getTeamLabel(awayTeamId);
+			return MessageFormat.format("{0}-{1}", teamName, FootballDataRestClient.getTeamLabel(awayTeamId));
 		} else {
-			setTeamName(awayTeamId);
-			homeTeamLabel = FootballDataRestClient.getTeamLabel(homeTeamId);
-			awayTeamLabel = teamName;
-		}
-		return String.format("%s-%s", homeTeamLabel, awayTeamLabel);
-	}
-
-	private void setTeamName(String id) throws Exception {
-		if (teamName == null) {
-			teamName = FootballDataRestClient.getTeamLabel(id);
+			return MessageFormat.format("{0}-{1}", FootballDataRestClient.getTeamLabel(homeTeamId), teamName);
 		}
 	}
 }
