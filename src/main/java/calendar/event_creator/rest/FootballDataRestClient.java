@@ -84,7 +84,7 @@ public class FootballDataRestClient {
 		if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
 			log.error("Error with football data response!");
 			log.error(stringResponse);
-			throw new RuntimeException();
+			System.exit(0);
 		}
 		return stringResponse;
 	}

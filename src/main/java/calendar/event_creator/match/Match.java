@@ -1,74 +1,70 @@
 package calendar.event_creator.match;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.text.MessageFormat;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import calendar.event_creator.rest.FootballDataRestClient;
+import calendar.event_creator.service.DemandedTeam;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Match {
+	private static final String CHAMPIONSHIP = "REGULAR_SEASON";
+
 	private String utcDate;
 	private String matchday;
 	private String stage;
 	private MatchObject competition;
 	private MatchObject homeTeam;
 	private MatchObject awayTeam;
-	@JsonIgnore
 	private String summary;
 
 	public String getUtcDate() {
 		return utcDate;
 	}
 
-	public void setUtcDate(String utcDate) {
-		this.utcDate = utcDate;
-	}
-
 	public String getMatchday() {
 		return matchday;
-	}
-
-	public void setMatchday(String matchday) {
-		this.matchday = matchday;
 	}
 
 	public String getStage() {
 		return stage;
 	}
 
-	public void setStage(String stage) {
-		this.stage = stage;
-	}
-
 	public MatchObject getCompetition() {
 		return competition;
-	}
-
-	public void setCompetition(MatchObject competition) {
-		this.competition = competition;
 	}
 
 	public MatchObject getHomeTeam() {
 		return homeTeam;
 	}
 
-	public void setHomeTeam(MatchObject homeTeam) {
-		this.homeTeam = homeTeam;
-	}
-
 	public MatchObject getAwayTeam() {
 		return awayTeam;
 	}
 
-	public void setAwayTeam(MatchObject awayTeam) {
-		this.awayTeam = awayTeam;
-	}
-
-	@JsonIgnore
 	public String getSummary() {
 		return summary;
 	}
 
-	@JsonIgnore
-	public void setSummary(String summary) {
-		this.summary = summary;
+	public void setSummary(DemandedTeam team) throws Exception {
+		String homeTeamId = getHomeTeam().getId();
+		String awayTeamId = getAwayTeam().getId();
+
+		this.summary = homeTeamId.equals(team.getTeamId())
+				? MessageFormat.format("{0}-{1}", team.getTeamName(), FootballDataRestClient.getTeamLabel(awayTeamId))
+				: MessageFormat.format("{0}-{1}", FootballDataRestClient.getTeamLabel(homeTeamId), team.getTeamName());
+	}
+
+	public String getDescription() {
+		return getCompetition().getName() + getCompetitionDescription() +
+				System.lineSeparator() +
+				MessageFormat.format("{0} - {1}", getHomeTeam().getName(), getAwayTeam().getName());
+	}
+
+	private String getCompetitionDescription() {
+		return getStage().equals(CHAMPIONSHIP)
+				? ": " + getMatchday() + ". matchday"
+				: ": " + getStage().toLowerCase().replace("_", " ");
 	}
 }

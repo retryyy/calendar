@@ -20,12 +20,15 @@ public class AppService {
 		Matches matches = new ObjectMapper().readValue(response, Matches.class);
 		matches.getMatches().sort(new MatchesComparator());
 
+		String teamName = FootballDataRestClient.getTeamLabel(TEAM_ID);
+		DemandedTeam team = new DemandedTeam(TEAM_ID, teamName);
+
 		googleCalendarService = new GoogleCalendarService()
-				.setTeam(TEAM_ID)
+				.setTeam(team)
 				.setEventList(getNearestMatchUtcDate(matches));
 
 		matches.getMatches().forEach(match -> googleCalendarService.triggerEvent(match));
-		googleCalendarService.deletePostponedMatchEvent();
+		googleCalendarService.deletePostponedMatchEvents();
 		log.info("football-data.org has been called " + FootballDataRestClient.num_of_calls + " times");
 	}
 
@@ -33,7 +36,7 @@ public class AppService {
 		if (matches.getMatches().size() > 0) {
 			return matches.getMatches().get(0).getUtcDate();
 		} else {
-			log.warn("There are no registered matches!");
+			log.warn("There is no registered match!");
 			throw new RuntimeException();
 		}
 	}

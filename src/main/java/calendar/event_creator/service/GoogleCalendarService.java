@@ -2,7 +2,6 @@ package calendar.event_creator.service;
 
 import java.io.IOException;
 import java.text.MessageFormat;
-import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -14,7 +13,6 @@ import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
 
 import calendar.event_creator.match.Match;
-import calendar.event_creator.rest.FootballDataRestClient;
 import calendar.event_creator.rest.GoogleCalendarRestClient;
 import calendar.event_creator.utils.CalendarProperties;
 import calendar.event_creator.utils.DateMatcher;
@@ -22,12 +20,10 @@ import calendar.event_creator.utils.DateMatcher;
 public class GoogleCalendarService {
 	private static final Log log = LogFactory.getLog(GoogleCalendarService.class);
 	private static final String CALENDAR_ID = CalendarProperties.getProperty("calendar.id");
-	private static final String CHAMPIONSHIP = "REGULAR_SEASON";
 	private static final String TIMEZONE = "UTC";
 	private static final String EVENT_CREATE_TIMEZONE = "Europe/Budapest";
 	private static final String EVENT_LENGTH = "-02:00";
-	private String teamId;
-	private String teamName;
+	private DemandedTeam team;
 	private List<Event> events;
 	private Calendar calendar;
 
@@ -37,20 +33,20 @@ public class GoogleCalendarService {
 
 	public void triggerEvent(Match match) {
 		try {
-			match.setSummary(createMatchSummary(match));
-			String matchId = createMatchId(match);
-			Event event = searchEventByMatchId(matchId);
+			match.setSummary(team);
+			Event event = searchEventByMatchId(createMatchId(match));
 
+			String summary = match.getSummary();
 			if (event == null) {
 				createEvent(match);
-				log.info("CREATED: " + match.getSummary());
+				log.info("CREATED: " + summary);
 			} else {
 				String eventTime = event.getStart().getDateTime().toString();
 				if (!DateMatcher.equals(eventTime, match.getUtcDate())) {
 					updateEvent(match, event.getId());
-					log.info("UPDATED: " + match.getSummary());
+					log.info("UPDATED: " + summary);
 				} else {
-					log.info("UNTOUCHED: " + match.getSummary());
+					log.info("UNTOUCHED: " + summary);
 				}
 			}
 		} catch (Exception e) {
@@ -58,9 +54,8 @@ public class GoogleCalendarService {
 		}
 	}
 
-	public GoogleCalendarService setTeam(String teamId) throws Exception {
-		this.teamId = teamId;
-		this.teamName = FootballDataRestClient.getTeamLabel(teamId);
+	public GoogleCalendarService setTeam(DemandedTeam team) throws Exception {
+		this.team = team;
 		return this;
 	}
 
@@ -77,17 +72,11 @@ public class GoogleCalendarService {
 	}
 
 	private void cleanOutNonMatchEvents() {
-		String matchSummaryRegex = MessageFormat.format("{0}-{1}|{1}-{0}", teamName, "[A-Z]{3}");
-		Iterator<Event> eventIterator = events.iterator();
-		while (eventIterator.hasNext()) {
-			Event event = eventIterator.next();
-			if (!event.getSummary().matches(matchSummaryRegex)) {
-				eventIterator.remove();
-			}
-		}
+		String matchSummaryRegex = MessageFormat.format("{0}-{1}|{1}-{0}", team.getTeamName(), "[A-Z]{3}");
+		events.removeIf(event -> event.getSummary() == null || !event.getSummary().matches(matchSummaryRegex));
 	}
 
-	public void deletePostponedMatchEvent() {
+	public void deletePostponedMatchEvents() {
 		for (Event event : events) {
 			try {
 				if (event.getDescription() != null && !event.getDescription().equals("")) {
@@ -114,7 +103,7 @@ public class GoogleCalendarService {
 	private Event createEvent(Match match) throws IOException {
 		Event event = new Event()
 				.setSummary(match.getSummary())
-				.setDescription(getDescription(match))
+				.setDescription(match.getDescription())
 				.setColorId("9");
 		addDateTimesToEvent(event, match.getUtcDate());
 		return calendar.events()
@@ -143,33 +132,10 @@ public class GoogleCalendarService {
 	}
 
 	private String createMatchId(Match match) {
-		return match.getSummary() + getDescription(match);
+		return match.getSummary() + match.getDescription();
 	}
 
 	private String createMatchId(Event event) {
 		return event.getSummary() + event.getDescription();
-	}
-
-	private String getDescription(Match match) {
-		return match.getCompetition().getName() + getCompetitionDescription(match) +
-				System.lineSeparator() +
-				MessageFormat.format("{0} - {1}", match.getHomeTeam().getName(), match.getAwayTeam().getName());
-	}
-
-	private String getCompetitionDescription(Match match) {
-		return match.getStage().equals(CHAMPIONSHIP)
-				? ": " + match.getMatchday() + ". matchday"
-				: ": " + match.getStage().toLowerCase().replace("_", " ");
-	}
-
-	private String createMatchSummary(Match match) throws Exception {
-		String homeTeamId = match.getHomeTeam().getId();
-		String awayTeamId = match.getAwayTeam().getId();
-
-		if (homeTeamId.equals(teamId)) {
-			return MessageFormat.format("{0}-{1}", teamName, FootballDataRestClient.getTeamLabel(awayTeamId));
-		} else {
-			return MessageFormat.format("{0}-{1}", FootballDataRestClient.getTeamLabel(homeTeamId), teamName);
-		}
 	}
 }
