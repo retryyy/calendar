@@ -16,6 +16,7 @@ import calendar.event_creator.match.Match;
 import calendar.event_creator.rest.GoogleCalendarRestClient;
 import calendar.event_creator.utils.CalendarProperties;
 import calendar.event_creator.utils.DateMatcher;
+import calendar.event_creator.utils.Rfc3339Parser;
 
 public class GoogleCalendarService {
 	private static final Log log = LogFactory.getLog(GoogleCalendarService.class);
@@ -38,13 +39,15 @@ public class GoogleCalendarService {
 
 			String summary = match.getSummary();
 			if (event == null) {
-				createEvent(match);
-				log.info("CREATED: " + summary);
+				event = createEvent(match);
+				log.info("CREATED: " + summary + " (" + getFormattedStartDate(event) + ")");
+
 			} else {
 				String eventTime = event.getStart().getDateTime().toString();
 				if (!DateMatcher.equals(eventTime, match.getUtcDate())) {
-					updateEvent(match, event.getId());
-					log.info("UPDATED: " + summary);
+					event = updateEvent(match, event.getId());
+					log.info("UPDATED: " + summary + " (" + getFormattedStartDate(event) + ")");
+
 				} else {
 					log.info("UNTOUCHED: " + summary);
 				}
@@ -93,9 +96,8 @@ public class GoogleCalendarService {
 		for (int i = 0; i < events.size(); i++) {
 			Event event = events.get(i);
 			String googleEventId = createMatchId(event);
-			if (matchId.equals(googleEventId)) {
+			if (matchId.equals(googleEventId))
 				return events.remove(i);
-			}
 		}
 		return null;
 	}
@@ -137,5 +139,10 @@ public class GoogleCalendarService {
 
 	private String createMatchId(Event event) {
 		return event.getSummary() + event.getDescription();
+	}
+
+	private String getFormattedStartDate(Event event) {
+		String date = event.getStart().getDateTime().toStringRfc3339();
+		return Rfc3339Parser.format(date);
 	}
 }
