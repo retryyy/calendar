@@ -1,5 +1,8 @@
 package calendar.event_creator.match;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class MatchObject {
 	private String id;
 	private String name;

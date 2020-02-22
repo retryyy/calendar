@@ -54,7 +54,7 @@ public class FootballDataRestClient {
 				.setHost(FOOTBALL_DATA_SITE)
 				.setPath(String.format(FOOTBALL_DATA_MATCHES, id))
 				.setParameter("status", UPCOMING_MATCHES_PARAMETER)
-				.setParameter("limit", String.valueOf(matchesUpdateLimit))
+				//.setParameter("limit", String.valueOf(matchesUpdateLimit))
 				.build();
 		return buildHttpGet(uri);
 	}

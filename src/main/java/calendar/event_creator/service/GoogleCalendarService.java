@@ -40,7 +40,7 @@ public class GoogleCalendarService {
 			String summary = match.getSummary();
 			if (event == null) {
 				event = createEvent(match);
-				log.info("CREATED: " + summary + " (" + getFormattedStartDate(event) + ")");
+				log.info("CREATED: " + summary + " [" + getFormattedStartDate(event) + "]");
 
 			} else {
 				String eventTime = event.getStart().getDateTime().toString();
