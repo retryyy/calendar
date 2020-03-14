@@ -28,23 +28,11 @@ public class AppService {
 
 		String teamName = FootballDataRestClient.getTeamLabel(TEAM_ID);
 		DemandedTeam team = new DemandedTeam(TEAM_ID, teamName);
-
-		googleCalendarService = new GoogleCalendarService()
-				.setTeam(team)
-				.setEventList(getNearestMatchUtcDate(matches));
+		googleCalendarService = new GoogleCalendarService(team);
 
 		matches.getMatches().forEach(match -> googleCalendarService.triggerEvent(match));
 		googleCalendarService.deletePostponedMatchEvents();
 		log.info("football-data.org has been called " + FootballDataRestClient.num_of_calls + " times");
-	}
-
-	private String getNearestMatchUtcDate(Matches matches) {
-		if (matches.getMatches().size() > 0) {
-			return matches.getMatches().get(0).getUtcDate();
-		} else {
-			log.warn("There is no registered match!");
-			throw new RuntimeException();
-		}
 	}
 
 	private void limitMatches(Matches matches) {

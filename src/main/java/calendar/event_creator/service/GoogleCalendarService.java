@@ -28,8 +28,10 @@ public class GoogleCalendarService {
 	private List<Event> events;
 	private Calendar calendar;
 
-	public GoogleCalendarService() throws Exception {
+	public GoogleCalendarService(DemandedTeam team) throws Exception {
+		this.team = team;
 		calendar = GoogleCalendarRestClient.buildCalendar();
+		fetchMatchEventList();
 	}
 
 	public void triggerEvent(Match match) {
@@ -57,21 +59,15 @@ public class GoogleCalendarService {
 		}
 	}
 
-	public GoogleCalendarService setTeam(DemandedTeam team) throws Exception {
-		this.team = team;
-		return this;
-	}
-
-	public GoogleCalendarService setEventList(String date) throws IOException {
+	private void fetchMatchEventList() throws IOException {
 		this.events = calendar.events().list(CALENDAR_ID)
 				.setTimeZone(TIMEZONE)
-				.setTimeMin(new DateTime(date))
+				.setTimeMin(new DateTime(System.currentTimeMillis()))
 				.setSingleEvents(true)
 				.setOrderBy("startTime")
 				.execute()
 				.getItems();
 		cleanOutNonMatchEvents();
-		return this;
 	}
 
 	private void cleanOutNonMatchEvents() {
